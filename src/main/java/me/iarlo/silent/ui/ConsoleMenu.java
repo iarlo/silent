@@ -51,12 +51,18 @@ public class ConsoleMenu {
                 case 1:
                     this.telaCadastrarProduto();
                     break;
-//                case 2:
+                case 2:
+                    this.telaAlterarProduto();
+                    break;
                 case 3:
                     this.telaCadastrarCliente();
                     break;
-//                case 4:
-//                case 5:
+                case 4:
+                    this.telaAlterarCliente();
+                    break;
+                case 5:
+                    this.telaCriarNota();
+                    break;
                 case 6:
                     this.telaListarNotas();
                     break;
@@ -113,6 +119,22 @@ public class ConsoleMenu {
         System.out.println("Produto cadastrado com sucesso");
     }
 
+    private void telaAlterarProduto() throws IOException, InterruptedException {
+        this.output.mudarTela();
+        this.telaListarProdutos();
+        String codigo = this.input.lerString("Digite o código do produto: ");
+        Produto produto = this.lojaService.buscarProdutoPorCodigo(codigo);
+        if (produto == null) {
+            OutputUtils.erro("Produto não encontrado");
+            return;
+        }
+        BigDecimal preco = this.input.lerPreco("Novo preço: ");
+        int estoque = this.input.lerInteiro("Novo estoque: ");
+        produto.setPrecoBase(preco);
+        produto.setEstoque(estoque);
+        System.out.println("Produto atualizado com sucesso.");
+    }
+    
     private void telaCadastrarCliente() throws IOException, InterruptedException {
         this.output.mudarTela();
         Cliente cliente = null;
@@ -153,6 +175,49 @@ public class ConsoleMenu {
         System.out.println("Cliente cadastrado com sucesso");
     }
 
+    private void telaAlterarCliente() throws IOException, InterruptedException {
+        this.output.mudarTela();
+        this.telaListarClientes();
+        String codigo = this.input.lerString("Digite o código do cliente: ");
+        Cliente cliente = this.lojaService.buscarClientePorCodigo(codigo);
+        if (cliente == null) {
+            OutputUtils.erro("Cliente não encontrado");
+            return;
+        }
+        cliente.setNome(this.input.lerString("Novo nome: "));
+        cliente.setEndereco(this.input.lerString("Novo endereço: "));
+        cliente.setTelefone(this.input.lerString("Novo telefone: "));
+        System.out.println("Cliente atualizado com sucesso.");
+    }
+
+    private void telaCriarNota() throws IOException, InterruptedException {
+        this.output.mudarTela();
+        this.telaListarClientes();
+        String codigo = this.input.lerString("Digite o código do cliente: ");
+        Cliente cliente = this.lojaService.buscarClientePorCodigo(codigo);
+        if (cliente == null) {
+            OutputUtils.erro("Cliente não encontrado");
+            return;
+        }
+        Nota nota = new Nota(cliente);
+        while (true) {
+            this.telaListarProdutos();
+            String codigoProduto = this.input.lerString("Digite o código do produto (ou 'fim' para encerrar): ");
+            if (codigoProduto.equalsIgnoreCase("fim")) break;
+            Produto produto = this.lojaService.buscarProdutoPorCodigo(codigoProduto);
+            if (produto == null) {
+                OutputUtils.erro("Produto não encontrado");
+                continue;
+            }
+            int qtd = this.input.lerInteiro("Quantidade: ");
+            nota.adicionarItem(new ItemNota(produto, qtd));
+        }
+        nota.calcularSubtotal();
+        this.lojaService.adicionarNotaFiscal(nota);
+        System.out.println("Nota criada com sucesso!");
+        nota.exibirResumo(0);
+    }
+    
     private void telaListarProdutos() throws IOException, InterruptedException {
         this.output.mudarTela();
         for (int i = 0; i < this.lojaService.getProdutos().size(); i++)
